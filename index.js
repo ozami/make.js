@@ -61,28 +61,24 @@ const group = prereqs => {
 /**
  * @param {string} target
  * @param {Array<Rule>} prereqs
- * @param {function() => Promise}
+ * @param {function(target, prereqs) => Promise} execute
  * @return Rule
  */
 const file = (target, prereqs, execute) => {
-  const f = async () => {
-    prereqs = prereqs || []
-    prereqs = prereqs.map(x => {
+  return async () => {
+    const _prereqs = (prereqs || []).map(x => {
       return typeof x == "string" ? (() => getMTime(x)) : x
     })
-    const results = await inSequence(prereqs)
+    const results = await inSequence(_prereqs)
     const prereq_time = maxTime(results)
     const target_time = await getMTime(target)
     if (target_time > prereq_time) {
       return target_time
     }
     console.log(target)
-    await execute()
+    await execute(target, prereqs)
     return await getMTime(target)
   }
-  f.target = target
-  f.prereqs = prereqs
-  return f
 }
 
 /**
