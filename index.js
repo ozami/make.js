@@ -49,13 +49,21 @@ const inSequence = async rules => {
 }
 
 /**
- * @param {Array<Rule>} prereqs
+ * @param {Array<Rule>|Object} prereqs
  * @return Rule
  */
 const group = prereqs => {
-  return async () => {
-    return maxTime(await inSequence(prereqs))
+  const func = async () => {
+    let _prereqs = Array.isArray(prereqs) ? prereqs : (
+      Object.keys(prereqs).map(key => prereqs[key])
+    )
+    return maxTime(await inSequence(_prereqs))
   }
+  return new Proxy(func, {
+    get: (obj, prop) => {
+      return prereqs[prop]
+    }
+  })
 }
 
 /**
