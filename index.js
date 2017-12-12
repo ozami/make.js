@@ -65,7 +65,7 @@ const group = prereqs => {
  * @return Rule
  */
 const file = (target, prereqs, execute) => {
-  return async () => {
+  const func = async () => {
     const _prereqs = (prereqs || []).map(x => {
       return typeof x == "string" ? (() => getMTime(x)) : x
     })
@@ -79,6 +79,13 @@ const file = (target, prereqs, execute) => {
     await execute(target, prereqs)
     return await getMTime(target)
   }
+  Object.defineProperty(func, "target", {
+    get: () => target
+  })
+  Object.defineProperty(func, "prereqs", {
+    get: () => prereqs.slice(0) // clone
+  })
+  return func
 }
 
 /**
