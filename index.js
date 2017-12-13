@@ -37,33 +37,29 @@ const getMTime = path => {
 }
 
 /**
- * @param {Array<Rule>>} rules
+ * @param {Array<Rule>} rules
  * @return {Promise<Array<Date>>}
  */
 const inSequence = async rules => {
   const results = []
   for (let i = 0; i < rules.length; ++i) {
-    results.push(await rules[i]())
+    results.push(await run(rules[i]))
   }
   return results
 }
 
 /**
- * @param {Array<Rule>|Object} prereqs
- * @return Rule
+ * @param {Rule|Array<Rule>|Object} rule
+ * @return {Promise<Date>}
  */
-const group = prereqs => {
-  const func = async () => {
-    let _prereqs = Array.isArray(prereqs) ? prereqs : (
-      Object.keys(prereqs).map(key => prereqs[key])
-    )
-    return maxTime(await inSequence(_prereqs))
+const run = async rule => {
+  if (typeof rule == "function") {
+      return rule()
   }
-  return new Proxy(func, {
-    get: (obj, prop) => {
-      return prereqs[prop]
-    }
-  })
+  if (Array.isArray(rule)) {
+    return maxTime(await inSequence(rule))
+  }
+  return run(Object.keys(rule).map(key => rule[key]))
 }
 
 /**
@@ -126,15 +122,15 @@ const listFiles = path => {
  * @return null
  */
 const forever = (rule, interval) => {
-  const run = async () => {
-    await rule()
-    setTimeout(run, interval)
+  const loop = async () => {
+    await run(rule)
+    setTimeout(loop, interval)
   }
-  run()
+  loop()
 }
 
 module.exports = {
-  group,
+  run,
   file,
   always,
   forever,
