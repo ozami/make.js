@@ -119,12 +119,19 @@ const listFiles = path => {
 /**
  * @param {Rule} rule
  * @param {number} interval
+ * @param {number} interval_on_error
  * @return null
  */
-const forever = (rule, interval) => {
+const forever = (rule, interval = 200, interval_on_error = 5000) => {
   const loop = async () => {
-    await run(rule)
-    setTimeout(loop, interval)
+    run(rule)
+    .then(() => {
+      setTimeout(loop, interval)
+    })
+    .catch(e => {
+      console.error(e)
+      setTimeout(loop, interval_on_error)
+    })
   }
   loop()
 }
