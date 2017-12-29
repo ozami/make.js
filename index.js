@@ -136,11 +136,32 @@ const forever = (rule, interval = 200, interval_on_error = 5000) => {
   loop()
 }
 
+/**
+ * @param {Object} rules
+ * @param {Array<String>} names
+ */
+const execute = (rules, names) => {
+  const green = "\u001b[32m"
+  const red = "\u001b[31m"
+  const reset = "\u001b[0m"
+  run(names.map(name => rules[name]))
+  .then(() => {
+    console.error(green + "Success." + reset)
+    process.exit(0)
+  })
+  .catch(e => {
+    console.error(red + e + reset)
+    console.error(red + "Error." + reset)
+    process.exit(1)
+  })
+}
+
 module.exports = {
   run,
   file,
   always,
   forever,
+  execute,
   listFiles,
   FAR_PAST,
 }
